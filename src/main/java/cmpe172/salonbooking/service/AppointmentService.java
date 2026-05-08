@@ -176,11 +176,18 @@ public class AppointmentService {
 
         while (start.isBefore(end)) {
 
-            LocalTime time = start.toLocalTime();
+            LocalDateTime slotStart = start;
+            LocalDateTime slotEnd = start.plusMinutes(30);
 
-            if (!bookedTimes.contains(time)) {
-                slots.add(time.toString()); // "09:00"
+            boolean conflict = appointments.stream().anyMatch(a ->
+                    slotStart.isBefore(a.getEndTime()) &&
+                            slotEnd.isAfter(a.getStartTime())
+            );
+
+            if (!conflict) {
+                slots.add(slotStart.toLocalTime().toString());
             }
+
 
             start = start.plusMinutes(30);
         }

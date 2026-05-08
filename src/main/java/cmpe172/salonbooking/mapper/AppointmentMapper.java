@@ -14,7 +14,6 @@ public class AppointmentMapper {
         dto.setEndTime(appt.getEndTime().toString());
         dto.setStatus(appt.getStatus());
 
-        // only if using relationships
         if (appt.getClient() != null) {
             dto.setClientName(appt.getClient().getName());
         }
