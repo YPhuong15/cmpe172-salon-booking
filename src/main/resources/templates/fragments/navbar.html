@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="navbar" th:fragment="navbar">
+    <div class="logo">
+        <a th:href="@{/}" class="logo-link">
+        <span class="brand-icon" aria-hidden="true"></span>
+        <span>[Salon Name]</span>
+        </a>
+    </div>
+
+    <div class="nav-links">
+        <a th:href="@{/services}">Service</a>
+        <a th:href="@{/staff}">Staff</a>
+        <a th:href="@{/about}">About Us</a>
+        <a th:href="@{/appointments/manage}">Manage Appointment</a>
+        <a class="book-btn" th:href="@{/appointments}">Book Now</a>
+    </div>
+</nav>
+</body>
+</html>

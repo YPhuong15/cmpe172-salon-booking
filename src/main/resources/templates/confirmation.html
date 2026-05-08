@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Confirmed</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+    <link rel="stylesheet" href="/css/appointment.css" th:href="@{/css/appointment.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="appointment-page">
+
+    <section class="confirmation">
+        <h1 class="confirmation-title">
+            Appointment confirmed for
+            <span th:text="${appointment.client.name}">[Client Name]</span>!
+        </h1>
+
+        <p class="confirmation-subtitle">We'll see you soon!</p>
+
+        <div class="confirmation-illustration" aria-hidden="true">
+            <div class="calendar-card">
+                <div class="calendar-card__top"></div>
+                <div class="calendar-card__rings">
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="calendar-card__grid">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span class="is-highlighted"></span>
+                </div>
+            </div>
+            <div class="confirmation-check"></div>
+        </div>
+
+        <div class="confirmation-details">
+            <p th:text="${appointment.salonService.name}">[Service Name]</p>
+
+            <p>
+                with
+                <span th:text="${appointment.provider.name}">[Staff]</span>
+            </p>
+
+            <p>
+                at
+                <span th:text="${#temporals.format(appointment.startTime, 'MMM d, yyyy h:mm a')}">
+            [Date and Time]
+          </span>
+            </p>
+        </div>
+
+        <a class="primary-button confirmation-home" th:href="@{/}">
+            Back Home
+        </a>
+    </section>
+</main>
+</body>
+</html>

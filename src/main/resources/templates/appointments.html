@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book an Appointment</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+    <link rel="stylesheet" href="/css/appointment.css" th:href="@{/css/appointment.css}">
+
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="appointment-page">
+
+    <h1 class="appointment-title">Book an Appointment</h1>
+
+    <form class="appointment-form"
+          th:action="@{/appointments/book}"
+          th:object="${appointmentDTO}"
+          method="post">
+
+        <!-- Step 1: Service + Staff -->
+        <section class="form-step is-active" data-step="1">
+            <div class="step-layout step-layout--two-column">
+                <section>
+                    <h2 class="section-title">Services</h2>
+                    <div class="panel">
+                        <div class="panel-header">Services</div>
+
+                        <label class="list-row" th:each="service : ${services}">
+                            <span th:text="${service.name}">Services</span>
+                            <input type="radio"
+                                   th:field="*{serviceID}"
+                                   th:value="${service.id}"
+                                   th:attr="data-name=${service.name}">
+                        </label>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="section-title">Staffs</h2>
+
+                    <div class="panel">
+                        <div class="panel-header">Staffs</div>
+
+                        <div id="providerList">
+                            <p class="empty-slots"> Choose a service first.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="actions">
+                <button class="primary-button" type="button" data-next>Continue</button>
+            </div>
+        </section>
+
+        <!-- Step 2: Date + Time -->
+        <section class="form-step" data-step="2">
+            <div class="step-layout">
+                <aside>
+                    <p class="eyebrow">Your selected service(s)</p>
+                    <div class="selected-service">
+                        <p class="selected-service__name" id="selectedServiceName">
+                            No service selected
+                        </p>
+
+                        <p class="selected-service__meta">
+                            with <span id="selectedProviderName">No provider selected</span>
+                        </p>
+                        <button class="change-button" type="button" data-goto="1">Change</button>
+                    </div>
+                </aside>
+
+                <section>
+                    <h2 class="section-title">Select Date</h2>
+
+                    <div class="panel calendar">
+                        <div class="calendar-nav">
+                            <button type="button" id="prevMonth">&lsaquo;</button>
+                            <div class="calendar-month" id="calendarMonth">Month Year</div>
+                            <button type="button" id="nextMonth">&rsaquo;</button>
+                        </div>
+
+                        <div class="calendar-grid" id="calendarGrid">
+                            <div class="calendar-day-name">S</div>
+                            <div class="calendar-day-name">M</div>
+                            <div class="calendar-day-name">T</div>
+                            <div class="calendar-day-name">W</div>
+                            <div class="calendar-day-name">T</div>
+                            <div class="calendar-day-name">F</div>
+                            <div class="calendar-day-name">S</div>
+                        </div>
+
+                        <input type="hidden"
+                               id="selectedDate"
+                               name="date"
+                               th:field="*{date}">
+
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="section-title">Choose a slot</h2>
+
+                    <div class="panel time-list">
+                        <div class="panel-header">Choose a slot</div>
+
+                        <div id="timeSlots">
+                            <p class="empty-slots">Select a date to see available times.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="actions actions--split">
+                <button class="secondary-button" type="button" data-back>Back</button>
+                <button class="primary-button" type="button" data-next>Continue</button>
+            </div>
+        </section>
+
+        <!-- Step 3: Contact Info -->
+        <section class="form-step" data-step="3">
+            <div class="contact-card">
+                <h2 class="contact-title">Contact Info</h2>
+
+                <label class="field">
+                    <span>Name <span class="required">*</span></span>
+                    <input type="text" th:field="*{clientName}" required>
+                </label>
+
+                <label class="field">
+                    <span>Email <span class="required">*</span></span>
+                    <input type="email" th:field="*{email}" required>
+                </label>
+
+                <label class="field">
+                    <span>Phone number <span class="required">*</span></span>
+                    <input type="tel" th:field="*{phone}" required>
+                </label>
+
+                <div class="actions actions--split">
+                    <button class="secondary-button" type="button" data-back>Back</button>
+                    <button class="primary-button" type="submit">Confirm</button>
+                </div>
+            </div>
+        </section>
+    </form>
+
+</main>
+
+<script>
+    const steps = Array.from(document.querySelectorAll(".form-step"));
+    const indicators = Array.from(document.querySelectorAll(".stepper-item"));
+
+    let currentStep = 1;
+
+    function showStep(stepNumber) {
+        currentStep = stepNumber;
+
+        steps.forEach((step) => {
+            step.classList.toggle(
+                "is-active",
+                Number(step.dataset.step) === currentStep
+            );
+        });
+
+        indicators.forEach((indicator) => {
+            const indicatorStep = Number(indicator.dataset.stepIndicator);
+
+            indicator.classList.toggle("is-active", indicatorStep === currentStep);
+            indicator.classList.toggle("is-complete", indicatorStep < currentStep);
+        });
+    }
+
+    document.querySelectorAll('input[name="serviceID"]').forEach((serviceRadio) => {
+        serviceRadio.addEventListener("change", () => {
+            loadProvidersForService(serviceRadio.value);
+        });
+    });
+
+    function loadProvidersForService(serviceID) {
+        const providerList = document.getElementById("providerList");
+
+        providerList.innerHTML = `<p class="empty-slots">Loading staff...</p>`;
+
+        fetch(`/providers/by-service?serviceID=${serviceID}`)
+            .then((response) => response.json())
+            .then((providers) => {
+                if (!providers.length) {
+                    providerList.innerHTML = `
+                    <p class="empty-slots">No staff available for this service.</p>
+                `;
+                    return;
+                }
+
+                providerList.innerHTML = providers.map((provider) => `
+                <label class="list-row">
+                    <span>${provider.name}</span>
+                    <span class="avatar">${provider.name.charAt(0)}</span>
+                    <input type="radio"
+                           name="providerID"
+                           value="${provider.id}"
+                           data-name="${provider.name}">
+                </label>
+            `).join("");
+            })
+            .catch(() => {
+                providerList.innerHTML = `
+                <p class="empty-slots">Could not load staff.</p>
+            `;
+            });
+    }
+
+    function loadTimeSlots(selectedDate) {
+        const selectedProvider = document.querySelector('input[name="providerID"]:checked');
+        const timeSlotsContainer = document.getElementById("timeSlots");
+
+        console.log("Selected provider:", selectedProvider);
+        console.log("Selected date:", selectedDate);
+        console.log("Time slots container:", timeSlotsContainer);
+
+        if (!timeSlotsContainer) {
+            console.log("Missing #timeSlots container");
+            return;
+        }
+
+        if (!selectedProvider) {
+            timeSlotsContainer.innerHTML = `
+            <p class="empty-slots">Please choose a provider first.</p>
+        `;
+            return;
+        }
+
+        const providerId = selectedProvider.value;
+
+        fetch(`/appointments/slots?providerId=${providerId}&date=${selectedDate}`)
+            .then((response) => response.json())
+            .then((slots) => {
+                console.log("Slots from server:", slots);
+
+                if (!slots.length) {
+                    timeSlotsContainer.innerHTML = `
+                    <p class="empty-slots">No available slots for this date.</p>
+                `;
+                    return;
+                }
+
+                timeSlotsContainer.innerHTML = slots.map((slot) => `
+                <label class="list-row">
+                    <span>${slot}</span>
+                    <input type="radio" name="time" value="${slot}">
+                </label>
+            `).join("");
+            })
+            .catch((error) => {
+                console.log("Slot loading error:", error);
+
+                timeSlotsContainer.innerHTML = `
+                <p class="empty-slots">Could not load time slots.</p>
+            `;
+            });
+    }
+
+    function updateSelectedSummary() {
+        const selectedService = document.querySelector('input[name="serviceID"]:checked');
+        const selectedProvider = document.querySelector('input[name="providerID"]:checked');
+
+        document.getElementById("selectedServiceName").textContent =
+            selectedService ? selectedService.dataset.name : "No service selected";
+
+        document.getElementById("selectedProviderName").textContent =
+            selectedProvider ? selectedProvider.dataset.name : "No provider selected";
+    }
+
+    document.querySelectorAll("[data-next]").forEach((button) => {
+        button.addEventListener("click", () => {
+            updateSelectedSummary();
+            showStep(Math.min(currentStep + 1, steps.length));
+        });
+    });
+
+    document.querySelectorAll("[data-back]").forEach((button) => {
+        button.addEventListener("click", () => {
+            showStep(Math.max(currentStep - 1, 1));
+        });
+    });
+
+    document.querySelectorAll("[data-goto]").forEach((button) => {
+        button.addEventListener("click", () => {
+            showStep(Number(button.dataset.goto));
+        });
+    });
+
+    // FULL VISIBLE CALENDAR
+
+    const calendarGrid = document.getElementById("calendarGrid");
+    const calendarMonth = document.getElementById("calendarMonth");
+    const selectedDateInput = document.getElementById("selectedDate");
+
+    let calendarDate = new Date();
+
+    function formatDateForInput(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
+
+    function renderCalendar() {
+        const year = calendarDate.getFullYear();
+        const month = calendarDate.getMonth();
+
+        calendarMonth.textContent = calendarDate.toLocaleString("en-US", {
+            month: "long",
+            year: "numeric"
+        });
+
+        calendarGrid.querySelectorAll(".calendar-day, .calendar-empty").forEach((day) => {
+            day.remove();
+        });
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+
+        const firstWeekday = firstDayOfMonth.getDay();
+        const daysInMonth = lastDayOfMonth.getDate();
+
+        for (let i = 0; i < firstWeekday; i++) {
+            const empty = document.createElement("div");
+            empty.className = "calendar-empty";
+            calendarGrid.appendChild(empty);
+        }
+
+        for (let dayNumber = 1; dayNumber <= daysInMonth; dayNumber++) {
+            const dayDate = new Date(year, month, dayNumber);
+            const dayButton = document.createElement("button");
+
+            dayButton.type = "button";
+            dayButton.className = "calendar-day";
+            dayButton.textContent = dayNumber;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (dayDate < today) {
+                dayButton.disabled = true;
+                dayButton.classList.add("is-disabled");
+            } else {
+                dayButton.addEventListener("click", () => {
+                    document.querySelectorAll(".calendar-day").forEach((day) => {
+                        day.classList.remove("is-selected");
+                    });
+
+                    dayButton.classList.add("is-selected");
+
+                    const selectedDate = formatDateForInput(dayDate);
+                    selectedDateInput.value = selectedDate;
+
+                    loadTimeSlots(selectedDate);
+                });
+            }
+
+            calendarGrid.appendChild(dayButton);
+        }
+    }
+
+    document.getElementById("prevMonth").addEventListener("click", () => {
+        calendarDate.setMonth(calendarDate.getMonth() - 1);
+        renderCalendar();
+    });
+
+    document.getElementById("nextMonth").addEventListener("click", () => {
+        calendarDate.setMonth(calendarDate.getMonth() + 1);
+        renderCalendar();
+    });
+
+    renderCalendar();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Appointments</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+    <link rel="stylesheet" href="/css/appointment.css" th:href="@{/css/appointment.css}">
+</head>
+<body>
+
+<main class="appointment-page">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <section class="manage-page">
+        <h1 class="appointment-title">Manage Appointments</h1>
+
+        <section class="manage-search-section">
+            <form th:action="@{/appointments/manage}" method="get" class="manage-search-form">
+                <input type="email"
+                       name="email"
+                       th:value="${email}"
+                       placeholder="Enter your email to find appointments"
+                       required>
+
+                <button type="submit" class="primary-button">
+                    Find Appointment
+                </button>
+            </form>
+        </section>
+
+
+        <section th:if="${appointments != null}" class="appointments-section">
+            <h2 class="manage-section-title">Your Appointments</h2>
+
+            <p th:if="${appointments.isEmpty()}" class="empty-state">
+                No appointments found for this email.
+            </p>
+
+            <div class="appointment-card" th:each="appointment : ${appointments}">
+                <h3 class="appointment-card-title">
+                    Appointment Details
+                </h3>
+
+                <div class="appointment-detail-row">
+                    <span>Service</span>
+                    <strong th:text="${appointment.salonService.name}">Service Name</strong>
+                </div>
+
+                <div class="appointment-detail-row">
+                    <span>Provider</span>
+                    <strong th:text="${appointment.provider.name}">Provider Name</strong>
+                </div>
+
+                <div class="appointment-detail-row">
+                    <span>Date & Time</span>
+                    <strong th:text="${#temporals.format(appointment.startTime, 'MMM d, yyyy h:mm a')}">
+                        May 7, 2026 2:00 PM
+                    </strong>
+                </div>
+
+                <div class="appointment-detail-row">
+                    <span>Status</span>
+                    <strong th:text="${appointment.status}">CONFIRMED</strong>
+                </div>
+
+                <form th:if="${appointment.status != 'CANCELLED'}"
+                      th:action="@{/appointments/cancel/{id}(id=${appointment.apptID})}"
+                      method="post"
+                      class="appointment-card-actions">
+                    <input type="hidden" name="email" th:value="${email}">
+                    <button type="submit" class="cancel-button">
+                        Cancel Appointment
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </section>
+
+</main>
+
+</body>
+</html>
