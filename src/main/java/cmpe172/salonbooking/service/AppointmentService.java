@@ -157,27 +157,30 @@ public class AppointmentService {
     public List<String> generateSlots(Long providerId, String dateStr) {
 
         LocalDate date = LocalDate.parse(dateStr);
+        LocalDateTime now = LocalDateTime.now();
 
-        LocalDateTime start = date.atTime(9, 0);
-        LocalDateTime end = date.atTime(18, 0);
+        LocalDateTime startOfDay = date.atTime(9, 0);
+        LocalDateTime endOfDay = date.atTime(18, 0);
 
         List<Appointment> appointments =
-                repo.findByProvider_IdAndStartTimeBetween(
-                        providerId,
-                        start,
-                        end
-                );
-
-        Set<LocalTime> bookedTimes = appointments.stream()
-                .map(a -> a.getStartTime().toLocalTime())
-                .collect(Collectors.toSet());
+                repo.findByProvider_IdAndStartTimeBetween(providerId, startOfDay, endOfDay)
+                        .stream()
+                        .filter(a -> !"CANCELLED".equals(a.getStatus()))
+                        .toList();
 
         List<String> slots = new ArrayList<>();
 
-        while (start.isBefore(end)) {
+        LocalDateTime start = startOfDay;
+
+        while (start.isBefore(endOfDay)) {
 
             LocalDateTime slotStart = start;
             LocalDateTime slotEnd = start.plusMinutes(30);
+
+            if (date.isEqual(LocalDate.now()) && slotStart.isBefore(now)) {
+                start = start.plusMinutes(30);
+                continue;
+            }
 
             boolean conflict = appointments.stream().anyMatch(a ->
                     slotStart.isBefore(a.getEndTime()) &&
@@ -187,7 +190,6 @@ public class AppointmentService {
             if (!conflict) {
                 slots.add(slotStart.toLocalTime().toString());
             }
-
 
             start = start.plusMinutes(30);
         }

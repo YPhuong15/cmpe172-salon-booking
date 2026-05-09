@@ -27,6 +27,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("""
     SELECT a FROM Appointment a
     WHERE a.provider.id = :providerId
+    AND a.status = 'CONFIRMED'
     AND a.startTime < :endTime
     AND a.endTime > :startTime
     """)
